@@ -119,7 +119,7 @@ fn get_save_sections_data(
 }
 
 fn main() {
-    let data = fs::read("Pokemon_FireRed.sav").expect("Unable to read file");
+    let data = fs::read("./resources/Pokemon_FireRed.sav").expect("Unable to read file");
 
     if data.len() != SAVESIZE {
         println!("Unexpected size: {}. Expected: {}.", data.len(), SAVESIZE);
