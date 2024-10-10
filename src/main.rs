@@ -4,10 +4,15 @@ const SAVESIZE: usize = 131072;
 const SECTIONS: usize = 14;
 const DATASIZE: usize = 3968;
 const SIGNATURE: u32 = 0x08012025;
+const TEAMSIZE: usize = 6;
+const HALLOFFAMESIZE: usize = 50;
+
+//todo: proprietary character encoding
 
 struct FileStructure {
     gamesave_a: Vec<GameSaveBlock>,
     gamesave_b: Vec<GameSaveBlock>,
+    halloffame: Vec<HallOfFame>,
 }
 
 impl FileStructure {
@@ -15,6 +20,7 @@ impl FileStructure {
         FileStructure {
             gamesave_a: vec![GameSaveBlock::new(); SECTIONS],
             gamesave_b: vec![GameSaveBlock::new(); SECTIONS],
+            halloffame: vec![HallOfFame::new(); HALLOFFAMESIZE],
         }
     }
 }
@@ -36,6 +42,86 @@ impl GameSaveBlock {
             checksum: 0,
             signature: 0,
             saveindex: 0,
+        }
+    }
+}
+
+struct TrainerInfo {
+    playername: String,
+    playergender: bool,
+    trainerid: u32,
+    timeplayed: u64,
+    options: u32,
+    gamecode: u32,
+    securitykey: u32,
+}
+
+impl TrainerInfo {}
+
+struct TeamAndItems {
+    teamsize: u32,
+    pkmnlist: u32,
+    money: u32,
+    coins: u16,
+    pcitems: u32,
+    itempocket: u32,
+    keyitempocket: u32,
+    ballitempocket: u32,
+    tmcase: u32,
+    berrypocket: u32,
+}
+
+impl TeamAndItems {}
+
+struct GameState {}
+
+impl GameState {}
+
+struct MiscData {}
+
+impl MiscData {}
+
+struct RivalInfo {}
+
+impl RivalInfo {}
+
+struct PCBuffer {
+    currentpcbox: u32,
+    pokemonlist: u32,
+    boxnames: u32,
+    boxwallpapers: u32,
+}
+
+impl PCBuffer {}
+
+#[derive(Clone)]
+struct HallOfFame {
+    team: Vec<HallOfFamePkmn>,
+}
+
+impl HallOfFame {
+    fn new() -> Self {
+        HallOfFame {
+            team: vec![HallOfFamePkmn::new(); TEAMSIZE],
+        }
+    }
+}
+
+#[derive(Clone)]
+struct HallOfFamePkmn {
+    trainerid: u32,
+    personality: u32,
+    species: u16,
+    nickname: String,
+}
+
+impl HallOfFamePkmn {
+    fn new() -> Self {
+        HallOfFamePkmn {
+            trainerid: 0,
+            personality: 0,
+            species: 0,
+            nickname: String::new(),
         }
     }
 }
@@ -104,18 +190,49 @@ fn get_save_sections_data(
             return false;
         }
 
-        println!(
-            "{} - 0x{:x} - 0x{:x} - {}",
-            gamesaves[i].sectionid,
-            gamesaves[i].checksum,
-            gamesaves[i].signature,
-            gamesaves[i].saveindex
-        );
+        // println!(
+        //     "{} - 0x{:x} - 0x{:x} - {}",
+        //     gamesaves[i].sectionid,
+        //     gamesaves[i].checksum,
+        //     gamesaves[i].signature,
+        //     gamesaves[i].saveindex
+        // );
 
         offset += 0x1000;
     }
 
     return true;
+}
+
+fn get_hall_of_fame_data(data: &Vec<u8>, halloffame: &mut Vec<HallOfFame>) {
+    let mut offset: usize = 0;
+
+    for i in 0..HALLOFFAMESIZE {
+        for j in 0..TEAMSIZE {
+            halloffame[i].team[j].trainerid = u32::from_le_bytes([
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
+            ]);
+
+            halloffame[i].team[j].personality = u32::from_le_bytes([
+                data[offset + 0x04],
+                data[offset + 0x04 + 1],
+                data[offset + 0x04 + 2],
+                data[offset + 0x04 + 3],
+            ]);
+
+            halloffame[i].team[j].species =
+                u16::from_le_bytes([data[offset + 0x08], data[offset + 0x08 + 1]]);
+
+            halloffame[i].team[j].nickname = String::from(" ");
+
+            offset += 0x20;
+        }
+    }
+
+    //println!("Hall of fame data acquired!");
 }
 
 fn main() {
@@ -130,4 +247,5 @@ fn main() {
 
     get_save_sections_data(&data, &mut gamesave.gamesave_a, 0);
     get_save_sections_data(&data, &mut gamesave.gamesave_b, 0xE000);
+    get_hall_of_fame_data(&data, &mut gamesave.halloffame);
 }
