@@ -8,6 +8,13 @@ const TEAMSIZE: usize = 6;
 const HALLOFFAMESIZE: usize = 50;
 
 //todo: proprietary character encoding
+//todo: pokemon data structure
+//todo: generic saveblock data
+//todo: teamanditems implementation
+//todo: gamestate implementation
+//todo: miscdata implementation
+//todo: rivalinfo implementation
+//todo: pcbuffer implementation
 
 struct FileStructure {
     gamesave_a: Vec<GameSaveBlock>,
