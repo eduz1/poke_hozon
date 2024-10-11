@@ -1,11 +1,18 @@
 use std::fs::{self};
 
+pub mod lib;
+use lib::character_encoding::CHAR_ENCODING_US;
+
+use crate::lib::character_encoding;
+
 const SAVESIZE: usize = 131072;
 const SECTIONS: usize = 14;
 const DATASIZE: usize = 3968;
 const SIGNATURE: u32 = 0x08012025;
 const TEAMSIZE: usize = 6;
 const HALLOFFAMESIZE: usize = 50;
+const PLAYERNAMELEN: usize = 7;
+const PKMNNAMELEN: usize = 10;
 
 //todo: proprietary character encoding
 //todo: pokemon data structure
@@ -15,6 +22,7 @@ const HALLOFFAMESIZE: usize = 50;
 //todo: miscdata implementation
 //todo: rivalinfo implementation
 //todo: pcbuffer implementation
+//todo: hall of fame name with proprietary
 
 struct FileStructure {
     gamesave_a: Vec<GameSaveBlock>,
@@ -233,7 +241,11 @@ fn get_hall_of_fame_data(data: &Vec<u8>, halloffame: &mut Vec<HallOfFame>) {
             halloffame[i].team[j].species =
                 u16::from_le_bytes([data[offset + 0x08], data[offset + 0x08 + 1]]);
 
-            halloffame[i].team[j].nickname = String::from(" ");
+            for ch in offset..offset + PKMNNAMELEN {
+                halloffame[i].team[j]
+                    .nickname
+                    .push(CHAR_ENCODING_US[data[ch] as usize]);
+            }
 
             offset += 0x20;
         }
